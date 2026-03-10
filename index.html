@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Irish Wave Buoys</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+font-family:Arial;
+background:#0c1c2b;
+color:white;
+padding:12px;
+}
+
+.container{
+max-width:850px;
+margin:auto;
+}
+
+h2{
+margin-bottom:8px;
+}
+
+select{
+padding:6px;
+margin-bottom:12px;
+}
+
+.surf{
+font-size:24px;
+margin-bottom:12px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-bottom:15px;
+}
+
+.card{
+background:#123046;
+padding:10px;
+border-radius:6px;
+text-align:center;
+}
+
+.label{
+font-size:12px;
+opacity:.7;
+}
+
+.value{
+font-size:20px;
+font-weight:bold;
+}
+
+canvas{
+background:white;
+border-radius:6px;
+margin-bottom:16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Irish Wave Buoys</h2>
+
+<select id="buoySelect">
+<option value="M2">M2</option>
+<option value="M3">M3</option>
+<option value="M4">M4</option>
+<option value="M5" selected>M5</option>
+<option value="M6">M6</option>
+</select>
+
+<div class="surf" id="headline"></div>
+
+<div class="grid">
+
+<div class="card">
+<div class="label">Significant Height</div>
+<div class="value" id="Hs"></div>
+</div>
+
+<div class="card">
+<div class="label">Significant Period</div>
+<div class="value" id="Tp"></div>
+</div>
+
+<div class="card">
+<div class="label">Direction</div>
+<div class="value" id="Dir"></div>
+</div>
+
+</div>
+
+<canvas id="heightChart"></canvas>
+<canvas id="periodChart"></canvas>
+
+</div>
+
+<script>
+
+let heightChart
+let periodChart
+
+function degToCompass(num){
+const val=Math.floor((num/22.5)+0.5)
+const arr=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+return arr[(val % 16)]
+}
+
+async function loadData(){
+
+const buoy=document.getElementById("buoySelect").value
+
+const url =
+"https://erddap.marine.ie/erddap/tabledap/IWBNetwork.csv?time,station_id,WaveHeight,WavePeriod,MeanWaveDirection&station_id=%22"
++buoy+
+"%22&time>=now-2days"
+
+const res=await fetch(url)
+const text=await res.text()
+
+const rows=text.trim().split("\n").slice(1)
+
+let times=[]
+let heights=[]
+let periods=[]
+let last
+
+rows.forEach((row,i)=>{
+
+const r=row.split(",")
+
+times.push(r[0].substring(11,16))
+heights.push(parseFloat(r[2]))
+periods.push(parseFloat(r[3]))
+
+if(i===rows.length-1) last=r
+
+})
+
+let Hs=last[2]
+let Tp=last[3]
+let Dir=last[4]
+
+document.getElementById("Hs").innerText=Hs+" m"
+document.getElementById("Tp").innerText=Tp+" s"
+document.getElementById("Dir").innerText=degToCompass(Dir)
+
+document.getElementById("headline").innerText =
+buoy+"  "+Hs+"m @ "+Tp+"s "+degToCompass(Dir)
+
+drawCharts(times,heights,periods)
+
+}
+
+function drawCharts(times,heights,periods){
+
+if(heightChart) heightChart.destroy()
+if(periodChart) periodChart.destroy()
+
+heightChart=new Chart(
+document.getElementById("heightChart"),
+{
+type:"line",
+data:{
+labels:times,
+datasets:[{
+label:"Wave Height (m)",
+data:heights,
+borderWidth:2
+}]
+}
+})
+
+periodChart=new Chart(
+document.getElementById("periodChart"),
+{
+type:"line",
+data:{
+labels:times,
+datasets:[{
+label:"Wave Period (s)",
+data:periods,
+borderWidth:2
+}]
+}
+})
+
+}
+
+document
+.getElementById("buoySelect")
+.addEventListener("change",loadData)
+
+loadData()
+
+setInterval(loadData,600000)
+
+</script>
+
+</body>
+</html>
