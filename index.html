@@ -34,7 +34,7 @@ margin-bottom:12px;
 
 .grid{
 display:grid;
-grid-template-columns:repeat(3,1fr);
+grid-template-columns:repeat(5,1fr);
 gap:10px;
 margin-bottom:15px;
 }
@@ -102,6 +102,15 @@ margin-bottom:16px;
 <canvas id="heightChart"></canvas>
 <canvas id="periodChart"></canvas>
 
+<div class="card">
+<div class="label">Max Height</div>
+<div class="value" id="Hmax"></div>
+</div>
+
+<div class="card">
+<div class="label">Max Period</div>
+<div class="value" id="THmax"></div>
+</div>
 </div>
 
 <script>
@@ -120,7 +129,7 @@ async function loadData(){
 const buoy=document.getElementById("buoySelect").value
 
 const url =
-"https://erddap.marine.ie/erddap/tabledap/IWBNetwork.csv?time,station_id,WaveHeight,WavePeriod,MeanWaveDirection&station_id=%22"
+"https://erddap.marine.ie/erddap/tabledap/IWBNetwork.csv?time,station_id,WaveHeight,WavePeriod,MeanWaveDirection,Hmax,THmax&station_id=%22"
 +buoy+
 "%22&time>=now-2days"
 
@@ -149,10 +158,14 @@ if(i===rows.length-1) last=r
 let Hs=last[2]
 let Tp=last[3]
 let Dir=last[4]
+let Hmax = last[5]
+let THmax = last[6]
 
 document.getElementById("Hs").innerText=Hs+" m"
 document.getElementById("Tp").innerText=Tp+" s"
 document.getElementById("Dir").innerText=degToCompass(Dir)
+document.getElementById("Hmax").innerText=Hmax+" m"
+document.getElementById("THmax").innerText=THmax+" s"
 
 document.getElementById("headline").innerText =
 buoy+"  "+Hs+"m @ "+Tp+"s "+degToCompass(Dir)
